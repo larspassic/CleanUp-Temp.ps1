@@ -26,24 +26,24 @@ $userInput = Read-Host -Prompt "Would you like to delete them? (Y / N) (default 
 #Check if the input from the user was yes
 #If input from the user was yes - delete the files
 if ($userInput.ToLower() -eq "y") 
+{
+    $subFolders | ForEach-Object 
     {
-        
-        $subFolders | ForEach-Object {
-            #Final check to make sure it was a folder and not a file
-            if ((Get-Item $_).Mode -eq "d-----")
-                {
-                    #Actually remove the folder
-                    Remove-Item -Confirm:$false
-                }
+        #Final check to make sure it was a folder and not a file
+        if ((Get-Item $_).Mode -eq "d-----")
+        {
+            #Actually remove the folder
+            Remove-Item $_ -Confirm:$false
+        }
+            
     }
+
+
+}
 
 #Otherwise do nothing and exit the script.
 else 
-    {
-        #Inform the user that no files were removed.
-        Write-Host "No files were removed, exiting."
-    }
-
-
-
+{
+    #Inform the user that no files were removed.
+    Write-Host "No files were removed, exiting."
 }
