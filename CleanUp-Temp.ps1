@@ -24,18 +24,33 @@ Write-Host "There were $($subFolders.Count) folders found."
 $userInput = Read-Host -Prompt "Would you like to delete them? (Y / N) (default is N):"
 
 #Check if the input from the user was yes
-#If input from the user was yes - delete the files
+#If input from the user was yes - proceed with deletion
 if ($userInput.ToLower() -eq "y") 
 {
-    $subFolders | ForEach-Object 
+    $subFolders | ForEach-Object -Begin {
+        Clear-Host
+        $i = 0
+    } -Process 
     {
-        #Final check to make sure it was a folder and not a file
+        #If the item meets the criteria, then delete it
         if ((Get-Item $_).Mode -eq "d-----")
         {
-            #Actually remove the folder
-            Remove-Item $_ -Confirm:$false
-        }
+            #Notify the user of when an item is deleted
+            Write-Host "Removing item $($_.Name)"
             
+            #Actually remove the folder
+            #Remove-Item $_ -Confirm:$false
+        }
+        #If it doesn't meet the criteria, then do not remove it
+        else 
+        {
+            #Notify the user when an item is not deleted
+            Write-Host "NOT removing item $($_.Name)"
+        }
+        $i++
+        
+        #Update progress
+        Write-Progress -Activity "Removing items" -Status "Progress: " -PercentComplete ($i/$subFolders.Count*100)
     }
 
 
