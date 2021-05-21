@@ -14,44 +14,50 @@ After the folders are found it deletes them.
 #Change the working location to be the temp folder
 Set-Location $env:TEMP
 
+#Explain what the script does
+Write-Host "This script finds and removes folders within the temp directory that match this pattern:"
+Write-Host "00000000-0000-0000-0000-000000000000"
+Write-Host ""
+
+#Create regex pattern to match the folders 00000000-0000-0000-0000-000000000000
+$folderRegex = "^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
+
 #Get all of the folders within the temp folder, then store them in a variable
-$subFolders = Get-ChildItem -Directory | Where-Object {$_.Name.Length -gt 35 -and $_.Name -like "*-*-*-*-*" }
+$subFolders = Get-ChildItem -Directory | Where-Object {$_.Name.Length -eq 36 -and $_.Name -match $folderRegex}
 
 #Tell the user how many folders were found
 Write-Host "There were $($subFolders.Count) folders found."
 
 #Prompt user for input
-$userInput = Read-Host -Prompt "Would you like to delete them? (Y / N) (default is N):"
+$userInput = Read-Host -Prompt "Would you like to delete them? (Y / N) (default is N)"
 
 #Check if the input from the user was yes
 #If input from the user was yes - proceed with deletion
 if ($userInput.ToLower() -eq "y") 
 {
     $subFolders | ForEach-Object -Begin {
-        Clear-Host
+
+        #Create the variable for the write progress command
         $i = 0
-    } -Process 
-    {
-        #If the item meets the criteria, then delete it
-        if ((Get-Item $_).Mode -eq "d-----")
-        {
-            #Notify the user of when an item is deleted
-            Write-Host "Removing item $($_.Name)"
-            
-            #Actually remove the folder
-            #Remove-Item $_ -Confirm:$false
-        }
-        #If it doesn't meet the criteria, then do not remove it
-        else 
-        {
-            #Notify the user when an item is not deleted
-            Write-Host "NOT removing item $($_.Name)"
-        }
-        $i++
-        
-        #Update progress
-        Write-Progress -Activity "Removing items" -Status "Progress: " -PercentComplete ($i/$subFolders.Count*100)
-    }
+    } -Process {
+                #If the item meets the criteria, then delete it
+                if ((Get-Item $_).Mode -eq "d-----")
+                {
+                    #Remove the folder
+                    Remove-Item $_ -Recurse -Confirm:$false
+
+                    #Update progress
+                    Write-Progress -Activity "Removing items" -Status "Removing folder $($_.Name): " -PercentComplete ($i/$subFolders.Count*100)
+                }
+                #If the folder doesn't meet the criteria, then do not remove it
+                else 
+                {
+                    #Update progress
+                    Write-Progress -Activity "Skipping items" -Status "Skipping folder $($_.Name): " -PercentComplete ($i/$subFolders.Count*100)
+                }
+                $i++
+                
+                }
 
 
 }
