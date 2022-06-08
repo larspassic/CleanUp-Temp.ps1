@@ -4,18 +4,14 @@ Created by Lars Passic
 
 This script searches the temp folder for folders like this: F6A3579C-997A-4A08-966F-617968446470
 It looks for items with more than 35 characters
-And that have 5 dashes in them
-And that are of type directory
+And Attributes are of type "Directory"
 This is pretty dangerous, do not recommend running this.
 
 After the folders are found it deletes them.
 #>
 
-#Change the working location to be the temp folder
-Set-Location $env:TEMP
-
 #Explain what the script does
-Write-Host "This script finds and removes folders within the temp directory that match this pattern:"
+Write-Host "This script finds and removes folders within the temp directory ($env:TEMP) that match this pattern:"
 Write-Host "00000000-0000-0000-0000-000000000000"
 Write-Host ""
 
@@ -23,7 +19,7 @@ Write-Host ""
 $folderRegex = "^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
 #Get all of the folders within the temp folder, then store them in a variable
-$subFolders = Get-ChildItem -Directory | Where-Object {$_.Name.Length -eq 36 -and $_.Name -match $folderRegex}
+$subFolders = Get-ChildItem $env:TEMP -Directory | Where-Object {$_.Name.Length -eq 36 -and $_.Name -match $folderRegex}
 
 #Tell the user how many folders were found
 Write-Host "There were $($subFolders.Count) folders found."
@@ -40,9 +36,13 @@ if ($userInput.ToLower() -eq "y")
         #Create the variable for the write progress command
         $i = 0
     } -Process {
-                #If the item meets the criteria, then delete it
-                if ((Get-Item $_).Mode -eq "d-----")
+                #If the item is a directory, then delete it
+                
+                if ((Get-Item $_).Attributes -eq "Directory")
                 {
+                    #Introduce some latency
+                    Start-Sleep -Milliseconds 100
+                    
                     #Remove the folder
                     Remove-Item $_ -Recurse -Confirm:$false
 
@@ -52,6 +52,9 @@ if ($userInput.ToLower() -eq "y")
                 #If the folder doesn't meet the criteria, then do not remove it
                 else 
                 {
+                    #Introduce some latency
+                    Start-Sleep -Milliseconds 100
+                    
                     #Update progress
                     Write-Progress -Activity "Skipping items" -Status "Skipping folder $($_.Name): " -PercentComplete ($i/$subFolders.Count*100)
                 }
